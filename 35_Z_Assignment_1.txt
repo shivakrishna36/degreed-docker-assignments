@@ -1,0 +1,136 @@
+Your fruit stand company has a Docker server set up to run three application components. There is a base-price component which serves a list of the base prices for the products sold at the fruit stand. There is also a sales component which provides a list of products that are on sale and their discount percentages. Finally, there is a total-price component that queries data from the other two services and calculates the total price for each item, including the discounts from sales.
+
+You have been asked to configure these three components by running containers on the Docker server. They need to communicate with each other using their own bridge network, which you will also need to create. A Docker server has been made available for you to use.
+
+Configure these application components on the Docker server so that the following specifications are met:
+
+1. Create a bridge network called prices-net.
+2. Run a container called base-price with the linuxacademycontent/prices-base-price:1 image. Configure this container to use the prices-net network.
+3. Run a container called sales with the linuxacademycontent/prices-sales:1 image. Configure this container to use the prices-net network.
+4. Run a container called total-price with the linuxacademycontent/prices-total-price:1 image. Configure this container to use the prices-net network. Publish this container's port 80 to port 8080 on the host.
+
+If everything is set up correctly, you should be able to access the total prices list with curl localhost:8080.
+
+Good luck!
+*********************************************************************************
+				Solution
+*********************************************************************************
+Create a bridge network called prices-net
+
+[node1] (local) root@192.168.0.18 ~
+docker network create --driver bridge prices-net
+9e57f6300fd79143288bd6da70b87acec742afdd3604a7f51a76773afcedb945
+
+---------------------------------------------------
+run a container called base-price in detach mode
+
+[node1] (local) root@192.168.0.18 ~
+$ docker run -d --name base-price --network prices-net linuxacademycontent/prices-base-price:1
+
+Unable to find image 'linuxacademycontent/prices-base-price:1' locally
+1: Pulling from linuxacademycontent/prices-base-price
+6ae821421a7d: Pull complete 
+da4474e5966c: Pull complete 
+eb2aec2b9c9f: Pull complete 
+11fdb6ecf8e5: Pull complete 
+376dcd7d98dc: Pull complete 
+Digest: sha256:11a73dc54b02fef68f7c2d275bcce78410238464f7d7b8b18442f39ff1ef30c3
+Status: Downloaded newer image for linuxacademycontent/prices-base-price:1
+02e5d4fb775a388ad33bd24d3345c50ba66f3ecc865568f90ef9417e20cc928e
+
+---------------------------------------------------------------
+run a container called sales in detach mode
+
+[node1] (local) root@192.168.0.18 ~
+$ docker run -d --name sales --network prices-net linuxacademycontent/prices-sales:1
+
+Unable to find image 'linuxacademycontent/prices-sales:1' locally
+1: Pulling from linuxacademycontent/prices-sales
+6ae821421a7d: Already exists 
+da4474e5966c: Already exists 
+eb2aec2b9c9f: Already exists 
+286147866c84: Pull complete 
+bdef4d996fe7: Pull complete 
+Digest: sha256:00d74cf1ba2d6b334a9ca82a2c089942dc12ac7b5bd2bea822a950527c1af8ab
+Status: Downloaded newer image for linuxacademycontent/prices-sales:1
+c2f14412222c704e4b3fd6d426f7cd605a45a02b39f47270cf373f5d7e92adc8
+
+----------------------------------------------------------------------
+run a container called total-price in detach mode
+
+[node1] (local) root@192.168.0.18 ~
+$ docker run -d --name total-price -p 8080:80 --network prices-net linuxacademycontent/prices-total-price:1
+
+Unable to find image 'linuxacademycontent/prices-total-price:1' locally
+1: Pulling from linuxacademycontent/prices-total-price
+e79bb959ec00: Pull complete 
+d4b7902036fe: Pull complete 
+1b2a72d4e030: Pull complete 
+d54db43011fd: Pull complete 
+69d473365bb3: Pull complete 
+6e2490ee2dc8: Pull complete 
+964e7de7abca: Pull complete 
+95a255758e4c: Pull complete 
+e4d3cfbf38c0: Pull complete 
+10f99269d425: Pull complete 
+7aaadaa0a859: Pull complete 
+fb86fab35b78: Pull complete 
+Digest: sha256:1aced9f7b1ec8c28d432dad865de09b42bdfb4dcd98613dbf6ab30dee9d1584b
+Status: Downloaded newer image for linuxacademycontent/prices-total-price:1
+4b933227e0bc052aa008ca508e47d3dae459ab2d36550975df79b522c9fd12a6
+
+-------------------------------------------------------
+check the output
+
+[node1] (local) root@192.168.0.18 ~
+$ curl localhost:8080
+
+{
+    "description": "A list of total prices, including discounts.",
+    "products": [
+        {
+            "name": "apple",
+            "price": "0.98"
+        },
+        {
+            "name": "banana",
+            "price": "1.00"
+        },
+        {
+            "name": "blueberry",
+            "price": "3.99"
+        },
+        {
+            "name": "coconut",
+            "price": "4.99"
+        },
+        {
+            "name": "cranberry",
+            "price": "2.09"
+        },
+        {
+            "name": "cucumber",
+            "price": "0.50"
+        },
+        {
+            "name": "currant",
+            "price": "2.00"
+        },
+        {
+            "name": "olive",
+            "price": "2.50"
+        },
+        {
+            "name": "orange",
+            "price": "1.31"
+        },
+        {
+            "name": "pamelo",
+            "price": "3.00"
+        },
+        {
+            "name": "papaya",
+            "price": "4.75"
+        }
+    ]
+}

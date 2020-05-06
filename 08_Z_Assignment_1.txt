@@ -1,0 +1,78 @@
+Your company is ready to start using Docker on some of their servers. In order to get started, they want you to set up and configure Docker CE on a server that has already been set up. You will need to make sure that the server meets the following specifications:
+
+Docker CE is installed and running on the server.
+Use Docker CE version 5:18.09.5~3-0~ubuntu-bionic.
+Any non-root user has permission to run docker commands.
+The default logging driver is set to syslog.
+
+
+[NOTE: Write the series of commands to achieve above in this file below the question scenario with documentation]
+
+
+Good luck!
+
+*******************************************************************************
+			solution
+*******************************************************************************
+SET UP THE REPOSITORY
+Update the apt package index and install packages to allow apt to use a repository over HTTPS:
+
+$ sudo apt-get update
+
+$ sudo apt-get install \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common
+
+Add Docker’s official GPG key:
+$ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+Verify that you now have the key with the fingerprint
+$ sudo apt-key fingerprint 0EBFCD88
+
+Use the following command to set up the stable repository
+$ sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+
+Update the apt package index, and install the latest version of Docker Engine and containerd, or go to the next step to install a specific version:
+
+ $ sudo apt-get update
+
+You can check the available versions in repo as follows:
+$ apt-cache madison docker-ce
+
+
+Here im using version "5:18.09.5~3-0~ubuntu-bionic"
+$ sudo apt-get install docker-ce=5:18.09.5~3-0~ubuntu-bionic docker-ce-cli=5:18.09.5~3-0~ubuntu-bionic containerd.io
+
+To check docker is installed 
+$ sudo docker version
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+1. To run Docker as a non-root user, you have to add your user to the docker group.
+
+2. Create a docker group if there isn’t one:
+$ sudo groupadd docker
+
+3. Add your user to the docker group:
+$ sudo usermod -aG docker [non-root user]
+
+4. Log out and log back in so that your group membership is re-evaluated.
+
+			or
+
+use this command to give permission to every one
+sudo chmod 777 /var/run/docker.sock
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Set default logging driver to syslog.
+
+1. create daemon.json file in /etc/docker/daemon.json and paste it
+{
+  "log-driver": "syslog"
+}
+

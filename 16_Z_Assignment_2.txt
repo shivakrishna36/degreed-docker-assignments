@@ -1,0 +1,259 @@
+Your company has recently decided to use Docker to run containers in production. They have built some Docker images to run their own proprietary software and need a place to store and manage these images. You have been asked to build a secure, private Docker registry for use by the company. In order to verify that everything works, you have also been asked to configure a Docker workstation server to push to and pull from the registry.
+
+To complete this lab, ensure that the following requirements are met for the registry:
+
+1. A private Docker registry is running on the Docker registry server using version 2 of the registry image.
+2. The container name for the registry should be registry.
+3. The registry should always automatically restart if it stops or the Docker daemon or server restarts.
+4. The registry should require authentication. Set up an initial account with the username docker and the password d0ck3rrU73z.
+5. The registry should use TLS with a self-signed certificate.
+6. The registry should listen on port 443.
+
+
+Set up the Docker workstation server to meet the following requirements:
+
+1. Docker is logged in to the private registry.
+2. Docker is configured to accept the self-signed cert. Do not turn off certificate verification using the insecure-registries setting.
+3. To confirm that everything is working, push a test image called ip-10-0-1-101:443/test-image:1 to the private registry. You can pull any image from Docker hub and tag it with ip-10-0-1-101:443/test-image:1 as a test.
+4. Delete the test image locally and pull it from the registry.
+
+[NOTE: Write the series of commands to achieve above in this file below the question scenario with documentation]
+
+Good luck!
+
+**********************************************************************************
+				Solution
+**********************************************************************************
+Create a directory to store certificate
+
+[node1] (local) root@192.168.0.18 ~
+mkdir -p /opt/certs
+
+----------------------------------------------------
+change directory to certs
+
+[node1] (local) root@192.168.0.18 ~
+$ cd /opt/certs/
+
+---------------------------------------------------------
+generate a self-signed certificate using openssl
+
+
+[node1] (local) root@192.168.0.18 /opt/certs
+$ openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout server.key -out server.crt
+
+Generating a RSA private key
+..............+++++
+.........................................................+++++
+writing new private key to 'server.key'
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:
+State or Province Name (full name) [Some-State]:
+Locality Name (eg, city) []:
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:
+Organizational Unit Name (eg, section) []:
+Common Name (e.g. server FQDN or YOUR name) []:
+Email Address []:
+
+-------------------------------------------------------
+[node1] (local) root@192.168.0.18 /opt/certs
+$ ls
+server.crt  server.key
+
+-------------------------------------------------------
+[node1] (local) root@192.168.0.18 /
+$ cd
+
+
+[node1] (local) root@192.168.0.18 ~
+$ cd /opt
+
+
+[node1] (local) root@192.168.0.18 /opt
+$ ls
+
+certs        containerd   httping-2.5
+
+
+
+[node1] (local) root@192.168.0.18 /opt
+$ cd
+
+--------------------------------------------------------
+create directory to store docker data
+
+[node1] (local) root@192.168.0.18 /opt/certs
+$ mkdir -p /opt/data
+
+---------------------------------------------------------
+create a directory to store the authentication users
+
+[node1] (local) root@192.168.0.18 ~
+$ mkdir -p /opt/auth
+
+
+-----------------------------------------------------
+[node1] (local) root@192.168.0.18 ~
+$ cd /opt
+
+--------------------------------------------------------
+create a basic auth with htpasswd.
+username = docker
+password=d0ck3rrU73z 
+
+[node1] (local) root@192.168.0.18 /opt
+$ docker run --entrypoint htpasswd   registry:2 -Bbn docker d0ck3rrU73z > auth/htpasswd
+
+Unable to find image 'registry:2' locally
+2: Pulling from library/registry
+486039affc0a: Pulling fs layer
+ba51a3b098e6: Pulling fs layer
+8bb4c43d6c8e: Pulling fs layer
+6f5f453e5f2d: Pulling fs layer
+42bc10b72f42: Pulling fs layer
+6f5f453e5f2d: Waiting
+486039affc0a: Verifying Checksum
+ba51a3b098e6: Verifying Checksum
+ba51a3b098e6: Download complete
+8bb4c43d6c8e: Verifying Checksum
+8bb4c43d6c8e: Download complete
+42bc10b72f42: Verifying Checksum
+42bc10b72f42: Download complete
+6f5f453e5f2d: Verifying Checksum
+6f5f453e5f2d: Download complete
+486039affc0a: Pull complete
+ba51a3b098e6: Pull complete
+8bb4c43d6c8e: Pull complete
+6f5f453e5f2d: Pull complete
+42bc10b72f42: Pull complete
+Digest: sha256:7d081088e4bfd632a88e3f3bcd9e007ef44a796fddfe3261407a3f9f04abe1e7
+Status: Downloaded newer image for registry:2
+
+---------------------------------------------------------------
+Deploying the Private Docker registry with SSL and basic AUTH
+
+[node1] (local) root@192.168.0.18 /opt
+$ docker run -d \
+>  -p 443:5000 \
+>  --restart=always \
+>  --name registry \
+>  -v /opt/auth:/auth \
+>  -e "REGISTRY_AUTH=htpasswd" \
+>  -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
+>  -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \
+>  -v /opt/certs:/certs \
+>  -v /opt/data:/var/lib/registry \
+>  -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.crt \
+>  -e REGISTRY_HTTP_TLS_KEY=/certs/server.key \
+>  registry:2
+
+0b5be03b0bbec718f2d7e862c7a53f843de0af7b846eddd436f1cc06fa00dbb0
+
+------------------------------------------------------------------------------------
+login to private registry
+
+[node1] (local) root@192.168.0.18 /opt
+$ docker login localhost:443
+
+Username: docker
+Password: 
+
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+
+
+
+-----------------------------------------------
+pull an image from docker hub
+
+[node1] (local) root@192.168.0.18 /opt
+$ docker pull nginx
+
+Using default tag: latest
+latest: Pulling from library/nginx
+54fec2fa59d0: Pull complete 
+4ede6f09aefe: Pull complete 
+f9dc69acb465: Pull complete 
+Digest: sha256:86ae264c3f4acb99b2dee4d0098c40cb8c46dcf9e1148f05d3a51c4df6758c12
+Status: Downloaded newer image for nginx:latest
+docker.io/library/nginx:latest
+
+
+----------------------------------------------------------
+tag the image with private registry
+
+[node1] (local) root@192.168.0.18 /opt
+$ docker tag nginx localhost:443/test-image:1
+
+
+--------------------------------------------------------
+push the image to private registry
+
+[node1] (local) root@192.168.0.18 /opt
+$ docker push localhost:443/test-image:1
+
+The push refers to repository [localhost:443/test-image]
+b3003aac411c: Pushed 
+216cf33c0a28: Pushed 
+c2adabaecedb: Pushed 
+1: digest: sha256:cccef6d6bdea671c394956e24b0d0c44cd82dbe83f543a47fdc790fadea48422 size: 948
+
+
+-------------------------------------------------
+list the images
+
+[node1] (local) root@192.168.0.18 /opt
+$ docker images
+REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+nginx                      latest              602e111c06b6        12 days ago         127MB
+localhost:443/test-image   1                   602e111c06b6        12 days ago         127MB
+registry                   2                   708bc6af7e5e        3 months ago        25.8MB
+
+
+--------------------------------------------------
+remove all images except registry:2
+
+[node1] (local) root@192.168.0.18 /opt
+$ docker rmi $(docker images)
+Untagged: nginx:latest
+Untagged: nginx@sha256:86ae264c3f4acb99b2dee4d0098c40cb8c46dcf9e1148f05d3a51c4df6758c12
+Untagged: localhost:443/test-image:1
+Untagged: localhost:443/test-image@sha256:cccef6d6bdea671c394956e24b0d0c44cd82dbe83f543a47fdc790fadea48422
+Deleted: sha256:602e111c06b6934013578ad80554a074049c59441d9bcd963cb4a7feccede7a5
+Deleted: sha256:81eaddad75aaa517b4a597912da28c2f5b905f6e9789dce3aea874b040aad201
+Deleted: sha256:73cafa8418003ecfaa02360f181c132b2cf4b61433e1bd5c84012941105865c8
+Deleted: sha256:c2adabaecedbda0af72b153c6499a0555f3a769d52370469d8f6bd6328af9b13
+
+
+---------------------------------------------------------
+list the images
+
+[node1] (local) root@192.168.0.18 /opt
+$ docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+registry            2                   708bc6af7e5e        3 months ago        25.8MB
+
+
+--------------------------------------------------------------
+Now pull the image from private registry
+
+[node1] (local) root@192.168.0.18 /opt
+$ docker pull localhost:443/test-image:1
+
+1: Pulling from test-image
+54fec2fa59d0: Pull complete 
+4ede6f09aefe: Pull complete 
+f9dc69acb465: Pull complete 
+Digest: sha256:cccef6d6bdea671c394956e24b0d0c44cd82dbe83f543a47fdc790fadea48422
+Status: Downloaded newer image for localhost:443/test-image:1
+localhost:443/test-image:1

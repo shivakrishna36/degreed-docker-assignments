@@ -1,0 +1,106 @@
+Your supermarket company is in the process of improving their Docker-based applications. They have built a set of three RESTful data services that communicate with each other as part of a larger infrastructure. You have been given the task of designing a Docker application stack so that these three services can be easily managed and scaled as a unit. A Docker Swarm cluster has already been set up by you to use in previous execises.
+
+Here is some background information on the three services:
+
+1. Fruit Service
+	a. Provides a list of fruits sold in the company's stores.
+	b. You can use the Docker image tag linuxacademycontent/fruit-service:1.0.1 to run this service.
+	c. Listens on port 80.
+	d. The service should be named fruit inside the stack.
+
+2. Vegetable Service
+	a. Provides a list of vegetables sold in the company's stores.
+	b. You can use the Docker image tag linuxacademycontent/vegetable-service:1.0.0 to run this service.
+	c. Listens on port 80.
+	d. The service should be named vegetables inside the stack.
+
+3. All Products Service
+	a. Queries the other two services, combining their data into a single list of all produce.
+	b. You can use the Docker image tag linuxacademycontent/all-products:1.0.0 to run this service.
+	c. Listens on port 80.
+	d. Use the environment variables FRUIT_HOST and FRUIT_PORT to set the host and port which will be used to query the fruit service.
+	e. Use the environment variables VEGETABLE_HOST and VEGETABLE_PORT to set the host and port which will be used to query the vegetable service.
+
+Step 1
+Deploy a Docker application stack that meets the following specifications:
+1. The stack is called produce.
+2. The stack runs the Fruit, Vegetable, and All Products services.
+3. The All Products service is able to query the Fruit and Vegetable services.
+4. The All Products service is published on port 8080.
+
+One you have deployed the stack, you can verify whether it is working by querying the All Products service:
+
+curl localhost:8080
+
+If the stack is set up correctly, you should get a combined list of fruits and vegetables.
+
+Step 2
+Once you have deployed the stack and verified that it is working, modify the stack by scaling both the Fruit and Vegetable services up to 3 replicas.
+
+
+Good luck!
+**********************************************************************************
+				Solution
+***********************************************************************************
+Initialize the docker swarm using below command
+
+$ docker swarm init --advertise-addr 192.168.0.18
+
+Swarm initialized: current node (is361q08ngkkyz0mk5jf0tr4w) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-0x5w1uq1qohevpjzcqecsz2wyjcixaid750312mb6l4ip9bkek-624p5rk9hjrrlni3yhobg1zmh 192.168.0.18:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+*************************************
+in node2 run the join command
+
+[node2] (local) root@192.168.0.17 ~
+docker swarm join --token SWMTKN-1-0x5w1uq1qohevpjzcqecsz2wyjcixaid750312mb6l4ip9bkek-624p5rk9hjrrlni3yhobg1zmh 192.168.0.18:2377
+This node joined a swarm as a worker.
+
+************************************************
+create docker stack file
+
+[node1] (local) root@192.168.0.18 ~
+$ vi stack.yml
+
+version: "3"
+  2 services:
+  3   fruit:
+  4     image: linuxacademycontent/fruit-service:1.0.1
+  5     ports:
+  6         - "8088:80"
+  7     deploy:
+  8       replicas: 3
+  9 
+ 10   vegetables:
+ 11     image: linuxacademycontent/vegetable-service:1.0.0
+ 12     ports:
+ 13         - "8089:80"
+ 14     deploy:
+ 15       replicas: 3
+ 16 
+ 17 
+ 18   allProducts:
+ 19     image: linuxacademycontent/all-products:1.0.0
+ 20     environment:
+ 21       - FRUIT_HOST=fruit
+ 22         FRUIT_PORT=8088
+ 23         VEGETABLE_HOST=vegetables
+ 24         VEGETABLE_PORT=8089
+ 25     ports:
+ 26         - "8080:80"
+
+*******************************************
+check the list of services
+
+[node1] (local) root@192.168.0.18 ~
+$ docker service ls
+
+ID                  NAME                  MODE                REPLICAS            IMAGE                                         PORTS
+n2mc76p1y9bx        produce_allProducts   replicated          1/1                 linuxacademycontent/all-products:1.0.0        *:8080->80/tcp
+es5h4vrwhq0x        produce_fruit         replicated          3/3                 linuxacademycontent/fruit-service:1.0.1       *:8088->80/tcp
+plvifai32353        produce_vegetables    replicated          3/3                 linuxacademycontent/vegetable-service:1.0.0   *:8089->80/tcp

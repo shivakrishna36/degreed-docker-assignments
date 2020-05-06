@@ -1,0 +1,238 @@
+Your supermarket company has a simple web service built on nginx that serves a static list of fresh fruit available in their stores. They want to run this service as a Docker container in their new swarm environment, but first they need you to build a Docker image for this service.
+
+On this repo (https://github.com/satyensingh/full-docker-training-16-Z-Assignment1.git), you will find the files needed to create the image. Create a Dockerfile to define the image according to the provided specifications, then test the image by running a container in detached mode and verifying that you can access the fresh fruit data from the application.
+
+The image should meet the following specifications:
+
+1. Use nginx tag 1.15.8 as the base image.
+2. Add the static fresh fruit data to the image so that it will be served by the nginx server. The data file is located on the server at static/fruit.json under the project directory. Add this file to the image at the location /usr/share/nginx/html/fruit.json.
+3. Add the nginx configuration file. This file is located on the server in the project directory and is called nginx.conf. Add this file to the image at /etc/nginx/nginx.conf.
+4. The image should expose port 80.
+5. Use the following as the default command: nginx -g daemon off;.
+6. Build the image with the tag fruit-list:1.0.0
+
+Once you have built the image you should be able to test it by running it as a container:
+
+docker run --name fruit-list -d -p 8080:80 fruit-list:1.0.0
+
+
+Verify that the container serves the required data by making a request to it on port 8080. If everything is set up correctly, you should get a JSON list of fruits.
+
+curl localhost:8080
+
+
+[NOTE: Write the series of commands to achieve above in this file below the question scenario with documentation]
+
+
+Good luck!
+
+
+
+*************************************************************************
+				Solution
+**************************************************************************
+Install git on ubuntu machine to clone the repository
+
+ubuntu@ip-172-31-90-13:~$ sudo apt install git
+
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+Suggested packages:
+  git-daemon-run | git-daemon-sysvinit git-doc git-el git-email git-gui gitk gitweb git-cvs
+  git-mediawiki git-svn
+The following packages will be upgraded:
+  git
+1 upgraded, 0 newly installed, 0 to remove and 19 not upgraded.
+Need to get 3915 kB of archives.
+After this operation, 16.4 kB of additional disk space will be used.
+Get:1 http://us-east-1.ec2.archive.ubuntu.com/ubuntu bionic-updates/main amd64 git amd64 1:2.17.1-1ubuntu0.7 [3915 kB]
+Fetched 3915 kB in 0s (47.3 MB/s)
+(Reading database ... 56891 files and directories currently installed.)
+Preparing to unpack .../git_1%3a2.17.1-1ubuntu0.7_amd64.deb ...
+Unpacking git (1:2.17.1-1ubuntu0.7) over (1:2.17.1-1ubuntu0.5) ...
+Setting up git (1:2.17.1-1ubuntu0.7) ...
+
+*****************************
+clone the repo as below
+
+ubuntu@ip-172-31-90-13:~$ git clone https://github.com/satyensingh/full-docker-training-16-Z-Assignment1.git
+
+Cloning into 'full-docker-training-16-Z-Assignment1'...
+remote: Enumerating objects: 5, done.
+remote: Counting objects: 100% (5/5), done.
+remote: Compressing objects: 100% (4/4), done.
+remote: Total 5 (delta 0), reused 5 (delta 0), pack-reused 0
+Unpacking objects: 100% (5/5), done.
+
+
+**************************************
+list all
+
+ubuntu@ip-172-31-90-13:~$ ls
+
+full-docker-training-16-Z-Assignment1
+
+
+****************************************
+change directory to :
+
+ubuntu@ip-172-31-90-13:~$ cd full-docker-training-16-Z-Assignment1/
+
+list all
+
+ubuntu@ip-172-31-90-13:~/full-docker-training-16-Z-Assignment1$ ls
+
+nginx.conf  static
+
+*************************************************************************
+create the docker file in this folder
+
+ubuntu@ip-172-31-90-13:~/full-docker-training-16-Z-Assignment1$ sudo vi Dockerfile
+
+FROM nginx:1.15.8
+ADD static/fruit.json /usr/share/nginx/html/fruit.json
+ADD nginx.conf /etc/nginx/nginx.conf
+EXPOSE 8080
+CMD ["nginx","-g","daemon off;"]
+
+
+***********************************************************************
+Build the docker image as follows:
+
+ubuntu@ip-172-31-90-13:~/full-docker-training-16-Z-Assignment1$ docker build . -t fruit-list:1.0.0
+
+Sending build context to Docker daemon  60.42kB
+Step 1/5 : FROM nginx:1.15.8
+1.15.8: Pulling from library/nginx
+6ae821421a7d: Pull complete
+da4474e5966c: Pull complete
+eb2aec2b9c9f: Pull complete
+Digest: sha256:dd2d0ac3fff2f007d99e033b64854be0941e19a2ad51f174d9240dda20d9f534
+Status: Downloaded newer image for nginx:1.15.8
+ ---> f09fe80eb0e7
+Step 2/5 : ADD static/fruit.json /usr/share/nginx/html/fruit.json
+ ---> f40467f2e202
+Step 3/5 : ADD nginx.conf /etc/nginx/nginx.conf
+ ---> b699b6d867fc
+Step 4/5 : EXPOSE 8080
+ ---> Running in c8a71b7980ee
+Removing intermediate container c8a71b7980ee
+ ---> 5b478d35a262
+Step 5/5 : CMD ["nginx","-g","daemon off;"]
+ ---> Running in 703ec81630f0
+Removing intermediate container 703ec81630f0
+ ---> d64bbaf411bc
+Successfully built d64bbaf411bc
+Successfully tagged fruit-list:1.0.0
+
+
+****************************************************
+list docker images
+
+ubuntu@ip-172-31-90-13:~/full-docker-training-16-Z-Assignment1$ docker images
+
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+fruit-list          1.0.0               d64bbaf411bc        9 seconds ago       109MB
+nginx               1.15.8              f09fe80eb0e7        15 months ago       109MB
+
+*********************************************
+Run the docker image as follows:
+
+ubuntu@ip-172-31-90-13:~/full-docker-training-16-Z-Assignment1$ docker run --name fruit-list -d -p 8080:80 fruit-list:1.0.0
+
+7faf97bb2641899acc573c7ead5794161e41a7196cc55e584822f2d4f932cc2c
+
+
+******************************************
+see the output as:
+
+ubuntu@ip-172-31-90-13:~/full-docker-training-16-Z-Assignment1$ curl localhost:8080
+{
+  "description": "A list of fruits.",
+  "fruits": [
+    "apple",
+    "apricot",
+    "avocado",
+    "banana",
+    "bell pepper",
+    "bilberry",
+    "blackberry",
+    "blackcurrant",
+    "blood orange",
+    "blueberry",
+    "boysenberry",
+    "breadfruit",
+    "canary melon",
+    "cantaloupe",
+    "cherimoya",
+    "cherry",
+    "chili pepper",
+    "clementine",
+    "cloudberry",
+    "coconut",
+    "cranberry",
+    "cucumber",
+    "currant",
+    "damson",
+    "date",
+    "dragonfruit",
+    "durian",
+    "eggplant",
+    "elderberry",
+    "feijoa",
+    "fig",
+    "goji berry",
+    "gooseberry",
+    "grape",
+    "grapefruit",
+    "guava",
+    "honeydew",
+    "huckleberry",
+    "jackfruit",
+    "jambul",
+    "jujube",
+    "kiwi fruit",
+    "kumquat",
+    "lemon",
+    "lime",
+    "loquat",
+    "lychee",
+    "mandarine",
+    "mango",
+    "mulberry",
+    "nectarine",
+    "nut",
+    "olive",
+    "orange",
+    "pamelo",
+    "papaya",
+    "passionfruit",
+    "peach",
+    "pear",
+    "persimmon",
+    "physalis",
+    "pineapple",
+    "plum",
+    "pomegranate",
+    "pomelo",
+    "purple mangosteen",
+    "quince",
+    "raisin",
+    "rambutan",
+    "raspberry",
+    "redcurrant",
+    "rock melon",
+    "salal berry",
+    "satsuma",
+    "star fruit",
+    "strawberry",
+    "tamarillo",
+    "tangerine",
+    "tomato",
+    "ugli fruit",
+    "watermelon"
+  ]
+}
+
+
