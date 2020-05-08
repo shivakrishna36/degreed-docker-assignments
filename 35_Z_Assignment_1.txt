@@ -80,7 +80,7 @@ Status: Downloaded newer image for linuxacademycontent/prices-total-price:1
 4b933227e0bc052aa008ca508e47d3dae459ab2d36550975df79b522c9fd12a6
 
 -------------------------------------------------------
-check the output
+check the output using curl
 
 [node1] (local) root@192.168.0.18 ~
 $ curl localhost:8080
