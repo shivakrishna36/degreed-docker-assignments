@@ -13,7 +13,7 @@ If everything is set up correctly, you should be able to access the total prices
 
 Good luck!
 *********************************************************************************
-				Solution
+				Solution 
 *********************************************************************************
 Create a bridge network called prices-net
 
